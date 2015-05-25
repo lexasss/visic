@@ -10,14 +10,18 @@
 
 <body>
 
-    <img id="image">
+    <div>
+        <img id="image">
+        <div id="fixations"></div>
+    </div>
+    
     <div id="menu">
         <span id="device" class="label">Not connected</span>
         <div id="options" class="button disabled">Options</div>
         <div id="calibrate" class="button disabled">Calibrate</div>
         <div id="toggle" class="button disabled">Start</div>
-        <div class="valueName">Threshold (ms)</div><input id="minDuration" type="number" min="300" max="2000" step="100" /><br>
-        <div class="valueName">Step (ms)</div><input id="durationStep" type="number" min="200" max="1000" step="50" /><br>
+        <div class="valueName">Threshold (ms)</div><input id="minDuration" type="number" min="100" max="2000" step="100" /><br>
+        <div class="valueName">Step (ms)</div><input id="durationStep" type="number" min="100" max="1000" step="50" /><br>
         <div class="valueName">Lower tone</div><input id="scaleFrom" type="number" min="1" max="35" step="1" /><br>
         <div class="valueName">Upper tone</div><input id="scaleTo" type="number" min="14" max="55" step="1" /><br>
         <div class="valueName">Tone by</div>

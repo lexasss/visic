@@ -42,6 +42,69 @@
 
 })(window);
 
+// Manages visible fixations
+//
+// Fixations (class):
+//   Required HTML elements:
+//      #fixations - fixations container
+//   Required CSS styles:
+//      .fixation - fixation element
+//   Properties:
+//   Events:
+//   Methods:
+//      add(coords: {x (int), y (int)}, duration (float) - add a visual fixation with fix coords and normalized duration
+//      clear() - remove all fixations
+//      set([Note], minDuration, maxDuration) - display a sequence of notes, provide max/max durations for normalization
+
+(function (root) { 'use strict'
+    if (!root.Visic) root.Visic = { };
+    
+    function Fixations(id, imageID) {
+        this.id = id;
+        this.imageID = imageID;
+        this.maxSize = 160;
+        
+        this._list = [];
+        this._container = document.querySelector('#' + id);
+        if (!this._container) {
+            throw 'Fixation container with the ID = "' + id + '" does not exist';
+        }
+    }
+    
+    Fixations.prototype.add = function (coords, duration) {
+        var size = Math.round(duration * this.maxSize);
+        var fixation = document.createElement('div');
+        fixation.style.width = fixation.style.height = size + 'px';
+        fixation.style.left = Math.round(coords.x - size / 2) + 'px';
+        fixation.style.top = Math.round(coords.y - size / 2) + 'px';
+        fixation.style.borderRadius = Math.round(size / 2) + 'px';
+        fixation.classList.add('fixation');
+        this._container.appendChild(fixation);
+        this._list.push(fixation);
+    };
+    
+    Fixations.prototype.clear = function () {
+        this._container.innerHTML = '';
+        this._list = [];
+    };
+    
+    Fixations.prototype.set = function (notes, minDuration, maxDuration) {
+        this.clear();
+        if (!notes)
+            return;
+        var minDur = minDuration || 100;
+        var maxDur = maxDuration || 1000;
+        for (var i = 0; i < notes.length; i++) {
+            var note = notes[i];
+            var duration = Math.min(1, (note.fixDuration - minDur) / (maxDur - minDur));
+            this.add(note.fixCoords, duration);
+        }
+    };
+    
+    root.Visic.Fixations = Fixations;
+    
+})(window);
+
 // Manages etudriver, delivers fixations
 //
 // gaze (object):
@@ -171,6 +234,7 @@
     
     function Image(id) {
         this.URL = 'http://www.splashbase.co/api/v1/images/random';
+        this.id = id;
         
         this._img = document.querySelector('#' + id);
         if (!this._img) {
@@ -216,15 +280,19 @@
 //      duration (float) - note note duration, 1 / 2^n : n={0..4}
 //      position (int) - note position in the sequence
 //      velocity (int) - note velocity
+//      fixCoords {x (int), y (int)} - fixation coords
+//      fixDuration (int) - fixation duration, ms
 
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
 
-    function Note(name, duration, position, velocity) {
+    function Note(name, duration, position, velocity, fixCoords, fixDuration) {
        this.name = name;
        this.duration = duration;
        this.position = position;
        this.velocity = velocity;
+       this.fixCoords = fixCoords;
+       this.fixDuration = fixDuration;
     }
         
     root.Visic.Note = Note;
@@ -540,8 +608,8 @@
             to: 28
         };
         this.toneSource = Synthesizer.ToneSource.GAZE_Y;
-        this.velocitySource = Synthesizer.VelocitySource.NONE;
-        this.durationSource = Synthesizer.DurationSource.GAZE_DURATION;
+        this.velocitySource = Synthesizer.VelocitySource.GAZE_DURATION;
+        this.durationSource = Synthesizer.DurationSource.NONE;
         
         this._notes = [];
         
@@ -569,7 +637,7 @@
         var noteDuration = this.GetDuration(coords, duration);
         var velocity = this.GetVelocity(coords, duration);
             
-        this._notes.push(new root.Visic.Note(noteName, noteDuration, 0, velocity));
+        this._notes.push(new root.Visic.Note(noteName, noteDuration, 0, velocity, coords, duration));
         console.log('new note: ', noteName, noteDuration);
     };
     

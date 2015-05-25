@@ -5,6 +5,8 @@
     var options = Visic.options;
     var image = new Visic.Image('image');
     image.update();
+    
+    var fixations = new Visic.Fixations('fixations', 'image');
         
     var synthesizer = new Visic.Synthesizer('image');
         
@@ -29,10 +31,14 @@
         synthesizer.toneSource = options.toneSource;
         synthesizer.velocitySource = options.velocitySource;
         synthesizer.durationSource = options.durationSource;
+        fixations.clear();
     });
     gaze.onStopped.add(function () {
         setPlayerOptions();
-        player.playSequence(synthesizer.getSequence());
+        
+        var sequence = synthesizer.getSequence();
+        fixations.set(sequence, synthesizer.minDuration, synthesizer.minDuration + synthesizer.durationStep * 8);
+        player.playSequence(sequence);
         //player.test();
     });
     
