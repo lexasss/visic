@@ -159,6 +159,8 @@
 // Image loader
 //
 // Image (class):
+//   Required HTML elements:
+//      #reload_{ID} - button to reload the image of the given ID
 //   Properties:
 //      URL (string) - the url that return a random image
 //   Methods:
@@ -167,31 +169,34 @@
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
     
-    var img = null;
-    
     function Image(id) {
         this.URL = 'http://www.splashbase.co/api/v1/images/random';
         
-        img = document.querySelector('#' + id);
-        if (!img) {
+        this._img = document.querySelector('#' + id);
+        if (!this._img) {
             throw 'Image with the ID = ' + id + ' does not exist';
         }
-        else if (img.src === undefined) {
+        else if (this._img.src === undefined) {
             throw 'The element with ID = ' + id + ' is not an image';
         }
+        
+        this._reload = document.getElementById('reload_' + id);
+        if (!this._reload)
+            throw 'Missing HTML elements for "image" object';
+        
+        this._reload.addEventListener('click', this.update.bind(this));
     }
     
     Image.prototype.update = function () {
+        var self = this;
         var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                var resp = JSON.parse(xhr.responseText);
-                if (resp.url !== undefined) {
-                    img.src = resp.url;
-                }
-                else if (resp.large_url !== undefined) {
-                    img.src = resp.large_url;
-                }
+        xhr.onload = function() {
+            var resp = JSON.parse(xhr.responseText);
+            if (resp.url !== undefined) {
+                self._img.src = resp.url;
+            }
+            else if (resp.large_url !== undefined) {
+                self._img.src = resp.large_url;
             }
         }
         
@@ -224,6 +229,66 @@
     
 })(window);
 
+(function (root) { 'use strict'
+    if (!root.Visic) root.Visic = { };
+    
+    var options = {
+        ensure: init,
+        get barDuration() { return parseInt(barDuration.value); },
+        set barDuration(value) { barDuration.value = value; },
+        get velocity() { return parseInt(velocity.value); },
+        set velocity(value) { velocity.value = value; },
+        get minDuration() { return parseInt(minDuration.value); },
+        set minDuration(value) { minDuration.value = value; },
+        get durationStep() { return parseInt(durationStep.value); },
+        set durationStep(value) { durationStep.value = value; },
+        get scaleFrom() { return parseInt(scaleFrom.value); },
+        set scaleFrom(value) { scaleFrom.value = value; },
+        get scaleTo() { return parseInt(scaleTo.value); },
+        set scaleTo(value) { scaleTo.value = value; },
+        get direction() { return parseInt(direction.value); },
+        set direction(value) { direction.value = value; },
+        get altC() { return parseInt(document.querySelector('input[name=altC]:checked').value); },
+        get altD() { return parseInt(document.querySelector('input[name=altD]:checked').value); },
+        get altE() { return parseInt(document.querySelector('input[name=altE]:checked').value); },
+        get altF() { return parseInt(document.querySelector('input[name=altF]:checked').value); },
+        get altG() { return parseInt(document.querySelector('input[name=altG]:checked').value); },
+        get altA() { return parseInt(document.querySelector('input[name=altA]:checked').value); },
+        get altB() { return parseInt(document.querySelector('input[name=altB]:checked').value); }
+    };
+    
+    var barDuration,
+        velocity,
+        minDuration,
+        durationStep,
+        scaleFrom,
+        scaleTo,
+        direction;
+    
+    function init() {
+        barDuration = document.getElementById('barDuration');
+        velocity = document.getElementById('velocity');
+        minDuration = document.getElementById('minDuration');
+        durationStep = document.getElementById('durationStep');
+        scaleFrom = document.getElementById('scaleFrom');
+        scaleTo = document.getElementById('scaleTo');
+        direction = document.getElementById('direction');
+
+        if (!barDuration || !velocity || !minDuration || !durationStep || !scaleFrom || !scaleTo || !direction)
+            throw 'Missing HTML elements for "options" object';
+    }
+    
+    if (document.readyState === 'complete') {
+        init();
+    }
+    else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+    
+    root.Visic.options = options;
+    
+})(window);
+
 // Manages MIDI, plays a collection of notes
 //
 // player (object):
@@ -237,6 +302,7 @@
 //      keys (object) - alternated keys for the whole duration, array of pairs specific keys (no quotes, like C, D, etc) and tone change (-1 for 'b' and 1 for '#')
 //   Events
 //      onReady() - fires when MIDI player is ready to play
+//      onReplay() - fires when the 'replay' button is pressed
 //   Methods
 //      isReady(): (bool) - returns true if MIDI is ready to play
 //      play( noteString (string), duration (float), moveTime (bool) ) - play a specific note, ex play('C3', 1/8, true);
@@ -255,6 +321,7 @@
         
         // events
         onReady: new root.Visic.Event(),
+        onReplay: new root.Visic.Event(),
         
         // internal members
         _timeline: 0,
@@ -375,6 +442,7 @@
             throw 'Missing HTML elements for "synthesizer" object';
         
         replay.addEventListener('click', function () {
+            player.onReplay.fire();
             player.replay();
         });
     }
@@ -398,9 +466,9 @@
 //      durationStep (int. ms) - the step to increase the note duration; if null, all notes has duration = 1/16
 //      scale: { from (int), to (int) } - min and max note values on the scale of image height
 //      direction (Synthesizer.Directions) - the dimension used when calculating a note tone 
-//      notes ([Note]) - all notes collected so far;
 //   Methods:
 //      putNote(coords: {x (number), y (number)}, duration: int) - add a note based on its coordinates and duration
+//      getSequence() - return an array of the collected notes
 //      reset() - reset the list of collected notes
 //   Enums:
 //      Direction = { VERTICAL, HORIZONTAL } - the dimension used when calculating a note tone 
@@ -412,14 +480,14 @@
     
     function Synthesizer(imageID) {
         
-        this.minDuration = 1000;
-        this.durationStep = 500;
+        this.minDuration = 700;
+        this.durationStep = 300;
         this.scale = {
             from: 14, 
             to: 28
         };
         this.direction = Synthesizer.Directions.VERTICAL;
-        this.notes = [];
+        this._notes = [];
         
         this._img = document.querySelector('#' + imageID);
         if (!this._img) {
@@ -454,12 +522,16 @@
         
         var noteDuration = this.durationStep > 0 ? this.GetProgressiveDuration(duration) : 1 / 16;
             
-        this.notes.push(new root.Visic.Note(noteName, noteDuration, 0));
+        this._notes.push(new root.Visic.Note(noteName, noteDuration, 0));
         console.log('new note: ', noteName, noteDuration);
     };
     
+    Synthesizer.prototype.getSequence = function() {
+        return this._notes.map(function (value) { return value; });
+    }
+    
     Synthesizer.prototype.reset = function () {
-        this.notes = [];
+        this._notes = [];
     };
     
     // internal
@@ -480,7 +552,7 @@
     // enums
     Synthesizer.Directions = {
         VERTICAL: 0,
-        HORIZONAL: 1
+        HORIZONTAL: 1
     };
     
     root.Visic.Synthesizer = Synthesizer;
