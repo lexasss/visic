@@ -20,16 +20,26 @@
         <div class="valueName">Step (ms)</div><input id="durationStep" type="number" min="200" max="1000" step="50" /><br>
         <div class="valueName">Lower tone</div><input id="scaleFrom" type="number" min="1" max="35" step="1" /><br>
         <div class="valueName">Upper tone</div><input id="scaleTo" type="number" min="14" max="55" step="1" /><br>
-        <div class="valueName">Mode</div>
-            <select id="direction">
-                <option value="0">vertical</option>
-                <option value="1">horizontal
-                </option>
+        <div class="valueName">Tone by</div>
+            <select id="toneSource">
+                <option value="0">x</option>
+                <option value="1">y</option>
+            </select>
+        <div class="valueName">Velocity by</div>
+            <select id="velocitySource">
+                <option value="0">none</option>
+                <option value="1">duration</option>
+            </select>
+        <div class="valueName">Duration by</div>
+            <select id="durationSource">
+                <option value="0">none</option>
+                <option value="1">duration</option>
             </select>
         <hr>
         <div id="replay" class="button disabled">Replay</div>
         <div class="valueName">Bar (steps)</div><input id="barDuration" type="number" min="2" max="16" step="1" /><br>
-        <div class="valueName">Velocity (Hz)</div><input id="velocity" type="number" min="60" max="160" step="1" /><br>
+        <div class="valueName">Velocity</div><input id="velocity" type="number" min="10" max="127" step="1" /><br>
+        <div class="valueName">Volume</div><input id="volume" type="number" min="10" max="127" step="1" /><br>
         <div class="valueName">Alternating</div>
             <span class="altTitle">b</span>
             <span class="altTitle">%</span>

@@ -215,19 +215,51 @@
 //      name (string) - note name in standard notation, like 'C3' or 'E4#'
 //      duration (float) - note note duration, 1 / 2^n : n={0..4}
 //      position (int) - note position in the sequence
+//      velocity (int) - note velocity
 
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
 
-    function Note(name, duration, position) {
+    function Note(name, duration, position, velocity) {
        this.name = name;
        this.duration = duration;
        this.position = position;
+       this.velocity = velocity;
     }
         
     root.Visic.Note = Note;
     
 })(window);
+
+// Manages options values reading/writing
+//
+// options (object):
+//   Required HTML elements:
+//      #minDuration - number for synthesizer.minDuration
+//      #durationStep - number for synthesizer.durationStep
+//      #scaleFrom - number for synthesizer.scale.from
+//      #scaleTo - number for synthesizer.scale.to
+//      #toneSource - selection from Synthesizer.ToneSource for synthesizer.toneSource
+//      #velocitySource - selection from Synthesizer.VelocitySource for synthesizer.velocitySource
+//      #durationSource - selection from Synthesizer.DurationSource for synthesizer.durationSource
+//      #barDuration - number for player.barDuration
+//      #velocity - number for player.velocity
+//      #volume - number for player.volume
+//      input[name="alt{A-G}"] - 3 radio buttons per A-C for player.keys
+//   Properties:
+//      minDuration
+//      durationStep
+//      scaleFrom
+//      scaleTo
+//      toneSource
+//      velocitySource
+//      durationSource
+//      barDuration
+//      velocity
+//      volume
+//      alt{A-G}
+//   Methods:
+//      ensure(): initializes internal variables with the DOM elements
 
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
@@ -238,6 +270,8 @@
         set barDuration(value) { barDuration.value = value; },
         get velocity() { return parseInt(velocity.value); },
         set velocity(value) { velocity.value = value; },
+        get volume() { return parseInt(volume.value); },
+        set volume(value) { volume.value = value; },
         get minDuration() { return parseInt(minDuration.value); },
         set minDuration(value) { minDuration.value = value; },
         get durationStep() { return parseInt(durationStep.value); },
@@ -246,8 +280,12 @@
         set scaleFrom(value) { scaleFrom.value = value; },
         get scaleTo() { return parseInt(scaleTo.value); },
         set scaleTo(value) { scaleTo.value = value; },
-        get direction() { return parseInt(direction.value); },
-        set direction(value) { direction.value = value; },
+        get toneSource() { return parseInt(toneSource.value); },
+        set toneSource(value) { toneSource.value = value; },
+        get velocitySource() { return parseInt(velocitySource.value); },
+        set velocitySource(value) { velocitySource.value = value; },
+        get durationSource() { return parseInt(durationSource.value); },
+        set durationSource(value) { durationSource.value = value; },
         get altC() { return parseInt(document.querySelector('input[name=altC]:checked').value); },
         get altD() { return parseInt(document.querySelector('input[name=altD]:checked').value); },
         get altE() { return parseInt(document.querySelector('input[name=altE]:checked').value); },
@@ -259,22 +297,28 @@
     
     var barDuration,
         velocity,
+        volume,
         minDuration,
         durationStep,
         scaleFrom,
         scaleTo,
-        direction;
+        toneSource,
+        velocitySource,
+        durationSource;
     
     function init() {
         barDuration = document.getElementById('barDuration');
         velocity = document.getElementById('velocity');
+        volume = document.getElementById('volume');
         minDuration = document.getElementById('minDuration');
         durationStep = document.getElementById('durationStep');
         scaleFrom = document.getElementById('scaleFrom');
         scaleTo = document.getElementById('scaleTo');
-        direction = document.getElementById('direction');
+        toneSource = document.getElementById('toneSource');
+        velocitySource = document.getElementById('velocitySource');
+        durationSource = document.getElementById('durationSource');
 
-        if (!barDuration || !velocity || !minDuration || !durationStep || !scaleFrom || !scaleTo || !direction)
+        if (!barDuration || !velocity || !volume || !minDuration || !durationStep || !scaleFrom || !scaleTo || !toneSource || !velocitySource || !durationSource)
             throw 'Missing HTML elements for "options" object';
     }
     
@@ -299,6 +343,7 @@
 //   Properties:
 //      barDuration (int) - bar duration
 //      velocity (int) - melody velocity
+//      volume (int) - melody volume
 //      keys (object) - alternated keys for the whole duration, array of pairs specific keys (no quotes, like C, D, etc) and tone change (-1 for 'b' and 1 for '#')
 //   Events
 //      onReady() - fires when MIDI player is ready to play
@@ -317,6 +362,7 @@
         // properties
         barDuration: 8,
         velocity: 127,
+        volume: 80,
         keys: { },  // Set -1 for 'b' and 1 for '#' for the whole duration for the specific keys (no quotes, like C, D, etc)
         
         // events
@@ -333,7 +379,7 @@
         isReady: function() {
             return _isReady;
         },
-        play: function(noteString, duration, moveTime) {
+        play: function(noteString, duration, moveTime, velocity) {
             if (!this._isReady)
                 return;
             
@@ -342,21 +388,26 @@
                 return;
             }
             
+            var vel = velocity || this.velocity;
+            if (0 < vel && vel <= 1) {
+                vel = Math.round(vel * 127);
+            }
+            
             var noteInt = this.CalcNote(noteString);
-            MIDI.noteOn(0, noteInt, this.velocity, this._timeline);
-            MIDI.noteOff(0, noteInt, this.velocity, this._timeline + this.barDuration * duration);
+            MIDI.noteOn(0, noteInt, vel, this._timeline);
+            MIDI.noteOff(0, noteInt, vel, this._timeline + this.barDuration * duration);
             if (typeof moveTime !== 'undefined' && moveTime === true) {
                 this.Move(duration);
             }
         },
         playSequence: function(notes) {
-            MIDI.setVolume(0, 80);
+            MIDI.setVolume(0, this.volume);
             this._timeline = 0;
             this._lastSequence = notes;
             if (notes) {
                 for (var i = 0; i < notes.length; i++) {
                     var note = notes[i];
-                    this.play(note.name, note.duration, true);
+                    this.play(note.name, note.duration, true, note.velocity);
                 }
                 replay.classList.remove('disabled');
             } 
@@ -368,14 +419,14 @@
             this.playSequence(this._lastSequence);
         },
         test: function() {
-            this.play('C3', 1/8, true);
-            this.play('D3', 1/8, true);
-            this.play('E3', 1/8, true);
-            this.play('F3', 1/8, true);
-            this.play('G3', 1/8, true);
-            this.play('A3', 1/8, true);
-            this.play('B3', 1/8, true);
-            this.play('C4', 1/8, true);
+            this.play('C3', 1/8, true, 16);
+            this.play('D3', 1/8, true, 32);
+            this.play('E3', 1/8, true, 48);
+            this.play('F3', 1/8, true, 64);
+            this.play('G3', 1/8, true, 80);
+            this.play('A3', 1/8, true, 96);
+            this.play('B3', 1/8, true, 112);
+            this.play('C4', 1/8, true, 127);
         },
 
         
@@ -465,13 +516,15 @@
 //      minDuration (int, ms) - minimum fixation duration to generate a note
 //      durationStep (int. ms) - the step to increase the note duration; if null, all notes has duration = 1/16
 //      scale: { from (int), to (int) } - min and max note values on the scale of image height
-//      direction (Synthesizer.Directions) - the dimension used when calculating a note tone 
+//      toneSource (Synthesizer.ToneSource) - the data source used when calculating a note tone 
 //   Methods:
 //      putNote(coords: {x (number), y (number)}, duration: int) - add a note based on its coordinates and duration
 //      getSequence() - return an array of the collected notes
 //      reset() - reset the list of collected notes
 //   Enums:
-//      Direction = { VERTICAL, HORIZONTAL } - the dimension used when calculating a note tone 
+//      ToneSource = { GAZE_Y, GAZE_X } - the data source used when calculating note tone 
+//      VelocitySource = { NONE, GAZE_DURATION } - the data source used when calculating note velocity
+//      DurationSource = { NONE, GAZE_DURATION } - the data source used when calculating note duration
 
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
@@ -486,7 +539,10 @@
             from: 14, 
             to: 28
         };
-        this.direction = Synthesizer.Directions.VERTICAL;
+        this.toneSource = Synthesizer.ToneSource.GAZE_Y;
+        this.velocitySource = Synthesizer.VelocitySource.NONE;
+        this.durationSource = Synthesizer.DurationSource.GAZE_DURATION;
+        
         this._notes = [];
         
         this._img = document.querySelector('#' + imageID);
@@ -505,24 +561,15 @@
             coords.y < 0 || this._img.offsetHeight < coords.y)
             return;
         
-        var normalizedTone;
-        switch (this.direction) {
-            case Synthesizer.Directions.VERTICAL:
-                normalizedTone = 1 - coords.y / this._img.offsetHeight;
-                break;
-            case Synthesizer.Directions.HORIZONTAL:
-                normalizedTone = 1 - coords.x / this._img.offsetWidth;
-                break;
-            default:
-                throw 'No implementation to calculate a tone for the direction ' + this.direction;
-        }
+        var noteTone = this.GetTone(coords, duration);
         
-        var noteValue = Math.round(this.scale.from + (this.scale.to - this.scale.from + 1) * normalizedTone);
+        var noteValue = Math.round(this.scale.from + (this.scale.to - this.scale.from + 1) * noteTone);
         var noteName = noteNames[noteValue % 7] + (Math.floor(noteValue / 7) + 1);
         
-        var noteDuration = this.durationStep > 0 ? this.GetProgressiveDuration(duration) : 1 / 16;
+        var noteDuration = this.GetDuration(coords, duration);
+        var velocity = this.GetVelocity(coords, duration);
             
-        this._notes.push(new root.Visic.Note(noteName, noteDuration, 0));
+        this._notes.push(new root.Visic.Note(noteName, noteDuration, 0, velocity));
         console.log('new note: ', noteName, noteDuration);
     };
     
@@ -535,6 +582,51 @@
     };
     
     // internal
+    Synthesizer.prototype.GetTone = function (coords, duration) {
+        var result;
+        switch (this.toneSource) {
+            case Synthesizer.ToneSource.GAZE_Y:
+                result = 1 - coords.y / this._img.offsetHeight;
+                break;
+            case Synthesizer.ToneSource.GAZE_X:
+                result = 1 - coords.x / this._img.offsetWidth;
+                break;
+            default:
+                throw 'No implementation to calculate tone for the toneSource ' + this.toneSource;
+        }
+        return result;
+    };
+    
+    Synthesizer.prototype.GetVelocity = function (coords, duration) {
+        var result;
+        switch (this.velocitySource) {
+            case Synthesizer.VelocitySource.NONE:
+                result = 63;
+                break;
+            case Synthesizer.VelocitySource.GAZE_DURATION:
+                result = 15 + 16 * Math.min(7, Math.round((duration - this.minDuration) / this.durationStep));
+                break;
+            default:
+                throw 'No implementation to calculate velocity for the velocitySource ' + this.velocitySource;
+        }
+        return result;
+    };
+    
+    Synthesizer.prototype.GetDuration = function (coords, duration) {
+        var result;
+        switch (this.durationSource) {
+            case Synthesizer.DurationSource.NONE:
+                result = 1 / 16;
+                break;
+            case Synthesizer.DurationSource.GAZE_DURATION:
+                result = this.GetProgressiveDuration(duration);
+                break;
+            default:
+                throw 'No implementation to calculate duration for the durationSource ' + this.durationSource;
+        }
+        return result;
+    };
+    
     Synthesizer.prototype.GetProgressiveDuration = function (duration) {
         var durSteps = Math.floor((duration - this.minDuration) / this.durationStep);
         var result = 1;
@@ -547,12 +639,20 @@
         else if (durSteps < 8)
             result = 1 / 2;
         return result;
-    }
+    };
     
     // enums
-    Synthesizer.Directions = {
-        VERTICAL: 0,
-        HORIZONTAL: 1
+    Synthesizer.ToneSource = {
+        GAZE_Y: 0,
+        GAZE_X: 1
+    };
+    Synthesizer.VelocitySource = {
+        NONE: 0,
+        GAZE_DURATION: 1
+    };
+    Synthesizer.DurationSource = {
+        NONE: 0,
+        GAZE_DURATION: 1
     };
     
     root.Visic.Synthesizer = Synthesizer;

@@ -12,9 +12,9 @@
     player.onReplay.add(function () {
         setPlayerOptions();
     });
-    //player.onReady.add(function () {
+    player.onReady.add(function () {
         //player.test();
-    //});
+    });
 
     var gaze = Visic.gaze;
     gaze.onFixationEnded.add(function (coords, duration) {
@@ -26,7 +26,9 @@
         synthesizer.durationStep = options.durationStep;
         synthesizer.scale.from = options.scaleFrom;
         synthesizer.scale.to = options.scaleTo;
-        synthesizer.direction = options.direction;
+        synthesizer.toneSource = options.toneSource;
+        synthesizer.velocitySource = options.velocitySource;
+        synthesizer.durationSource = options.durationSource;
     });
     gaze.onStopped.add(function () {
         setPlayerOptions();
@@ -40,14 +42,18 @@
         options.durationStep = synthesizer.durationStep;
         options.scaleFrom = synthesizer.scale.from;
         options.scaleTo = synthesizer.scale.to;
-        options.direction = synthesizer.direction;
+        options.toneSource = synthesizer.toneSource;
+        options.velocitySource = synthesizer.velocitySource;
+        options.durationSource = synthesizer.durationSource;
         options.barDuration = player.barDuration;
         options.velocity = player.velocity;
+        options.volume = player.volume;
     }
     
     function setPlayerOptions() {
         player.barDuration = options.barDuration;
         player.velocity = options.velocity;
+        player.volume = options.volume;
         player.keys = {
             C: options.altC,
             D: options.altD,
