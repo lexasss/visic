@@ -31,6 +31,8 @@
         synthesizer.toneSource = options.toneSource;
         synthesizer.velocitySource = options.velocitySource;
         synthesizer.durationSource = options.durationSource;
+
+        options.save();
         fixations.clear();
     });
     gaze.onStopped.add(function () {
@@ -43,7 +45,7 @@
     });
     
     function initOptions() {
-        options.ensure();
+        options.init();
         options.minDuration = synthesizer.minDuration;
         options.durationStep = synthesizer.durationStep;
         options.scaleFrom = synthesizer.scale.from;
@@ -54,6 +56,8 @@
         options.barDuration = player.barDuration;
         options.velocity = player.velocity;
         options.volume = player.volume;
+        
+        options.load();
     }
     
     function setPlayerOptions() {
@@ -69,6 +73,8 @@
             A: options.altA,
             B: options.altB
         };
+        
+        options.save();
     }
 
     if (document.readyState === 'complete') {

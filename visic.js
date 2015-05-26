@@ -327,13 +327,16 @@
 //      volume
 //      alt{A-G}
 //   Methods:
-//      ensure(): initializes internal variables with the DOM elements
+//      init(): initializes internal variables with the DOM elements
+//      load(): load saved options from local storage
 
 (function (root) { 'use strict'
     if (!root.Visic) root.Visic = { };
     
     var options = {
-        ensure: init,
+        init: init,
+        load: load,
+        save: save,
         get barDuration() { return parseInt(barDuration.value); },
         set barDuration(value) { barDuration.value = value; },
         get velocity() { return parseInt(velocity.value); },
@@ -390,13 +393,34 @@
             throw 'Missing HTML elements for "options" object';
     }
     
-    if (document.readyState === 'complete') {
-        init();
+    function load()
+    {
+        for (var property in options) {
+            if (options.hasOwnProperty(property) && !(options[property] instanceof Function)) {
+                var storedOptionsString = null;
+                try {
+                    storedOptionsString = localStorage.getItem(property);
+                } catch (ex) { }
+
+                if (storedOptionsString) {
+                    options[property] = JSON.parse(storedOptionsString);
+                }
+            }
+        }
     }
-    else {
-        document.addEventListener('DOMContentLoaded', init);
+
+    function save()
+    {
+        for (var property in options) {
+            if (options.hasOwnProperty(property) && !(options[property] instanceof Function)) {
+                try {
+                    var value = JSON.stringify(options[property]);
+                    localStorage.setItem(property, value);
+                } catch (ex) { }
+            }
+        }
     }
-    
+
     root.Visic.options = options;
     
 })(window);
