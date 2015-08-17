@@ -6,7 +6,9 @@
 //      remove(callback: function) - remove a function from the list of callbacks (all instances)
 //      fire(...) - fires the event by calling all callback functions added and passing all arguments to them
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+
     if (!root.Visic) root.Visic = { };
 
     function Event() {
@@ -16,7 +18,7 @@
     Event.prototype.add = function (callback) {
         if (typeof callback === 'function')
             this._callbacks.push(callback);
-    }
+    };
 
     Event.prototype.remove = function (callback) {
         for (var i = 0; i < this._callbacks.length; i++) {
@@ -25,18 +27,19 @@
                 i--;
             }
         }
-    }
+    };
 
     Event.prototype.fire = function () {
+        var i;
         var args = [];
-        for (var i = 0; i < arguments.length; i++) {
+        for (i = 0; i < arguments.length; i++) {
             args.push(arguments[i]);
         }
         
-        for (var i = 0; i < this._callbacks.length; i++) {
+        for (i = 0; i < this._callbacks.length; i++) {
             this._callbacks[i].apply(null, args);
         }
-    }
+    };
     
     root.Visic.Event = Event;
 
@@ -56,7 +59,9 @@
 //      clear() - remove all fixations
 //      set([Note], minDuration, maxDuration) - display a sequence of notes, provide max/max durations for normalization
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+    
     if (!root.Visic) root.Visic = { };
     
     function Fixations(id, imageID) {
@@ -120,7 +125,9 @@
 //      onStarted() - fires on tracking start
 //      onStopped() - fires on tracking stop
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+
     if (!root.Visic) root.Visic = { };
 
     var gaze = {
@@ -169,7 +176,7 @@
                     } else {
                         button.classList.remove('disabled');
                     }
-                }
+                };
 
                 setDisabled(options, !state.isServiceRunning || state.isTracking || state.isBusy);
                 setDisabled(calibrate, !state.isConnected || state.isTracking || state.isBusy);
@@ -229,7 +236,9 @@
 //   Methods:
 //      update() - updates the image
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+
     if (!root.Visic) root.Visic = { };
     
     function Image(id) {
@@ -262,11 +271,11 @@
             else if (resp.large_url !== undefined) {
                 self._img.src = resp.large_url;
             }
-        }
+        };
         
         xhr.open('GET', this.URL, true);
         xhr.send();
-    }
+    };
     
     root.Visic.Image = Image;
     
@@ -283,7 +292,9 @@
 //      fixCoords {x (int), y (int)} - fixation coords
 //      fixDuration (int) - fixation duration, ms
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+    
     if (!root.Visic) root.Visic = { };
 
     function Note(name, duration, position, velocity, fixCoords, fixDuration) {
@@ -330,7 +341,9 @@
 //      init(): initializes internal variables with the DOM elements
 //      load(): load saved options from local storage
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+    
     if (!root.Visic) root.Visic = { };
     
     var options = {
@@ -446,7 +459,9 @@
 //      playArray( [Note] ) - play a list of notes
 //      test() - test MIDI player
 
-(function (root) { 'use strict'
+(function (root) { 
+    'use strict';
+
     if (!root.Visic) root.Visic = { };
     
     var player = {
@@ -551,7 +566,7 @@
                     (this.keys[note] !== undefined ? this.keys[note] : 0);
         },
         IsEndOfBar : function() {
-            return !!(this._timeline % this.barDuration === 0)
+            return !!(this._timeline % this.barDuration === 0);
         },
         GetAltering : function(noteString) {
             var altering = noteString[2];
@@ -618,7 +633,9 @@
 //      VelocitySource = { NONE, GAZE_DURATION } - the data source used when calculating note velocity
 //      DurationSource = { NONE, GAZE_DURATION } - the data source used when calculating note duration
 
-(function (root) { 'use strict'
+(function (root) {
+    'use strict';
+
     if (!root.Visic) root.Visic = { };
 
     var noteNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -667,7 +684,7 @@
     
     Synthesizer.prototype.getSequence = function() {
         return this._notes.map(function (value) { return value; });
-    }
+    };
     
     Synthesizer.prototype.reset = function () {
         this._notes = [];
@@ -735,8 +752,8 @@
     
     // enums
     Synthesizer.ToneSource = {
-        GAZE_Y: 0,
-        GAZE_X: 1
+        GAZE_X: 0,
+        GAZE_Y: 1
     };
     Synthesizer.VelocitySource = {
         NONE: 0,
