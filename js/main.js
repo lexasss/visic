@@ -41,6 +41,8 @@
         var sequence = synthesizer.getSequence();
         fixations.set(sequence, synthesizer.minDuration, synthesizer.minDuration + synthesizer.durationStep * 8);
         player.playSequence(sequence);
+
+        Visic.midiFile.set( player.sequence() );
         //player.test();
     });
     

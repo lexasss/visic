@@ -281,6 +281,128 @@
     
 })(window);
 
+// Manages etudriver, delivers fixations
+//
+// gaze (object):
+//   Required HTML elements:
+//      #download - displays the current eye tracker, on 'not connected' if there is no connection to ETU-Driver
+//   Required CSS styles:
+//      .disabled - disables buttons
+
+(function (root) { 
+    'use strict';
+
+    if (!root.Visic) root.Visic = { };
+
+    var midiFile = {
+    	set: function (data) {
+	    	if (data) {
+	        	download.classList.remove('disabled');
+	        }
+	        else {
+	        	download.classList.add('disabled');
+	        }
+
+	        _data = data;
+	    },
+
+	    download: function() {
+    		if (_data) {
+    			var file = createFile( _data );
+	    		save( file );
+	    	}
+	    }
+    }
+
+    var _data;
+
+    function createFile(data) {
+		var file = new Midi.File();
+		/*
+		file
+	  		.addTrack()
+
+		    .note(0, 'c4', 32)
+		    .note(0, 'd4', 32)
+		    .note(0, 'e4', 32)
+		    .note(0, 'f4', 32)
+		    .note(0, 'g4', 32)
+		    .note(0, 'a4', 32)
+		    .note(0, 'b4', 32)
+		    .note(0, 'c5', 32)
+
+		    // church organ
+		    .instrument(0, 0x13)
+
+		    // by skipping the third arguments, we create a chord (C major)
+		    .noteOn(0, 'c4', 64)
+		    .noteOn(0, 'e4')
+		    .noteOn(0, 'g4')
+
+		    // by skipping the third arguments again, we stop all notes at once
+		    .noteOff(0, 'c4', 47)
+		    .noteOff(0, 'e4')
+		    .noteOff(0, 'g4')
+
+		    //alternatively, a chord may be created with the addChord function
+		    .addChord(0, ['c4', 'e4', 'g4'], 64)
+
+		    .noteOn(0, 'c4', 1)
+		    .noteOn(0, 'e4')
+		    .noteOn(0, 'g4')
+		    .noteOff(0, 'c4', 384)
+		    .noteOff(0, 'e4')
+		    .noteOff(0, 'g4')
+		    ;
+		*/
+		var track = new Midi.Track();
+		file.addTrack(track);
+		data.forEach( function(item) {
+			track.addNote(0, item.name, item.fixDuration, item.velocity);
+		});
+
+		return file.toBytes();
+    }
+    
+    function save(data) {
+        var blob = new Blob([data], {type: 'text/plain'});
+        
+        var downloadLink = document.createElement("a");
+        downloadLink.download = 'gaze.midi';
+        downloadLink.innerHTML = 'Download File';
+
+        var URL = window.URL || window.webkitURL;
+        downloadLink.href = URL.createObjectURL( blob );
+        downloadLink.onclick = function(event) { // self-destrly
+            document.body.removeChild(event.target);
+        };
+        downloadLink.style.display = 'none';
+        document.body.appendChild( downloadLink );
+
+        downloadLink.click();
+    };
+
+    function init() {
+        var download = document.getElementById('download');
+        if (!download) {
+            throw 'Missing HTML elements for "MidiFile" object';
+        }
+        download.addEventListener('click', function () {
+            midiFile.download();
+        });
+    }
+
+    if (document.readyState === 'complete') {
+        init();
+    }
+    else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+    
+    root.Visic.midiFile = midiFile;
+    
+})(window);
+
 // Note structure 
 //
 // Note (class):
@@ -458,6 +580,7 @@
 //      play( noteString (string), duration (float), moveTime (bool) ) - play a specific note, ex play('C3', 1/8, true);
 //      playArray( [Note] ) - play a list of notes
 //      test() - test MIDI player
+//      sequence() - returns the last played sequence
 
 (function (root) { 
     'use strict';
@@ -534,6 +657,9 @@
             this.play('A3', 1/8, true, 96);
             this.play('B3', 1/8, true, 112);
             this.play('C4', 1/8, true, 127);
+        },
+        sequence: function () {
+            return this._lastSequence;
         },
 
         
