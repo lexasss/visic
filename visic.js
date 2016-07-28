@@ -318,54 +318,70 @@
 
     function createFile(data) {
 		var file = new Midi.File();
-		/*
-		file
-	  		.addTrack()
 
-		    .note(0, 'c4', 32)
-		    .note(0, 'd4', 32)
-		    .note(0, 'e4', 32)
-		    .note(0, 'f4', 32)
-		    .note(0, 'g4', 32)
-		    .note(0, 'a4', 32)
-		    .note(0, 'b4', 32)
-		    .note(0, 'c5', 32)
-
-		    // church organ
-		    .instrument(0, 0x13)
-
-		    // by skipping the third arguments, we create a chord (C major)
-		    .noteOn(0, 'c4', 64)
-		    .noteOn(0, 'e4')
-		    .noteOn(0, 'g4')
-
-		    // by skipping the third arguments again, we stop all notes at once
-		    .noteOff(0, 'c4', 47)
-		    .noteOff(0, 'e4')
-		    .noteOff(0, 'g4')
-
-		    //alternatively, a chord may be created with the addChord function
-		    .addChord(0, ['c4', 'e4', 'g4'], 64)
-
-		    .noteOn(0, 'c4', 1)
-		    .noteOn(0, 'e4')
-		    .noteOn(0, 'g4')
-		    .noteOff(0, 'c4', 384)
-		    .noteOff(0, 'e4')
-		    .noteOff(0, 'g4')
-		    ;
-		*/
 		var track = new Midi.Track();
 		file.addTrack(track);
-		data.forEach( function(item) {
-			track.addNote(0, item.name, item.fixDuration, item.velocity);
-		});
+
+		track.addNote(0, 'c4', 64);
+		track.addNote(0, 'd4', 64);
+		track.addNote(0, 'e4', 64);
+		track.addNote(0, 'f4', 64);
+		track.addNote(0, 'g4', 64);
+		track.addNote(0, 'a4', 64);
+		track.addNote(0, 'b4', 64);
+		track.addNote(0, 'c5', 64)
+
+		// file
+	 //  		.addTrack()
+
+		//     .note(0, 'c4', 32)
+		//     .note(0, 'd4', 32)
+		//     .note(0, 'e4', 32)
+		//     .note(0, 'f4', 32)
+		//     .note(0, 'g4', 32)
+		//     .note(0, 'a4', 32)
+		//     .note(0, 'b4', 32)
+		//     .note(0, 'c5', 32)
+
+		//     // church organ
+		//     .instrument(0, 0x13)
+
+		//     // by skipping the third arguments, we create a chord (C major)
+		//     .noteOn(0, 'c4', 64)
+		//     .noteOn(0, 'e4')
+		//     .noteOn(0, 'g4')
+
+		//     // by skipping the third arguments again, we stop all notes at once
+		//     .noteOff(0, 'c4', 47)
+		//     .noteOff(0, 'e4')
+		//     .noteOff(0, 'g4')
+
+		//     //alternatively, a chord may be created with the addChord function
+		//     .addChord(0, ['c4', 'e4', 'g4'], 64)
+
+		//     .noteOn(0, 'c4', 1)
+		//     .noteOn(0, 'e4')
+		//     .noteOn(0, 'g4')
+		//     .noteOff(0, 'c4', 384)
+		//     .noteOff(0, 'e4')
+		//     .noteOff(0, 'g4')
+		//     ;
+		
+		// var track = new Midi.Track();
+		// file.addTrack(track);
+		// data.forEach( function(item) {
+		// 	track.addNote(0, item.name, item.fixDuration, item.velocity);
+		// });
 
 		return file.toBytes();
     }
     
     function save(data) {
-        var blob = new Blob([data], {type: 'text/plain'});
+    	data = Uint8Array.from( data, char => char.charCodeAt(0) );
+        var blob = new Blob( [data], {type: 'application/octet-stream'} );
+    	saveAs( blob, 'gaze.midi', true);
+		/*
+        var blob = new Blob(d, {type: 'application/octet-stream'});
         
         var downloadLink = document.createElement("a");
         downloadLink.download = 'gaze.midi';
@@ -375,11 +391,12 @@
         downloadLink.href = URL.createObjectURL( blob );
         downloadLink.onclick = function(event) { // self-destrly
             document.body.removeChild(event.target);
+//        	URL.revokeObjectURL( downloadLink.href );
         };
         downloadLink.style.display = 'none';
         document.body.appendChild( downloadLink );
 
-        downloadLink.click();
+        downloadLink.click();*/
     };
 
     function init() {
@@ -390,6 +407,9 @@
         download.addEventListener('click', function () {
             midiFile.download();
         });
+
+	    // midiFile.set('aa');
+	    // midiFile.download();
     }
 
     if (document.readyState === 'complete') {
@@ -400,7 +420,7 @@
     }
     
     root.Visic.midiFile = midiFile;
-    
+
 })(window);
 
 // Note structure 
