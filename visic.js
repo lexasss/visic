@@ -330,47 +330,14 @@
 		// track.addNote(0, 'a4', 64);
 		// track.addNote(0, 'b4', 64);
 		// track.addNote(0, 'c5', 64)
-
-		// file
-	 //  		.addTrack()
-
-		//     .note(0, 'c4', 32)
-		//     .note(0, 'd4', 32)
-		//     .note(0, 'e4', 32)
-		//     .note(0, 'f4', 32)
-		//     .note(0, 'g4', 32)
-		//     .note(0, 'a4', 32)
-		//     .note(0, 'b4', 32)
-		//     .note(0, 'c5', 32)
-
-		//     // church organ
-		//     .instrument(0, 0x13)
-
-		//     // by skipping the third arguments, we create a chord (C major)
-		//     .noteOn(0, 'c4', 64)
-		//     .noteOn(0, 'e4')
-		//     .noteOn(0, 'g4')
-
-		//     // by skipping the third arguments again, we stop all notes at once
-		//     .noteOff(0, 'c4', 47)
-		//     .noteOff(0, 'e4')
-		//     .noteOff(0, 'g4')
-
-		//     //alternatively, a chord may be created with the addChord function
-		//     .addChord(0, ['c4', 'e4', 'g4'], 64)
-
-		//     .noteOn(0, 'c4', 1)
-		//     .noteOn(0, 'e4')
-		//     .noteOn(0, 'g4')
-		//     .noteOff(0, 'c4', 384)
-		//     .noteOff(0, 'e4')
-		//     .noteOff(0, 'g4')
-		//     ;
 		
 		var track = new Midi.Track();
 		file.addTrack(track);
-		data.forEach( function(item) {
-			track.addNote(0, item.name, item.fixDuration, item.velocity);
+
+		var prevNoteDuration = 0;
+		data.forEach( function(note) {
+			track.addNote(0, note.name, note.ticks, prevNoteDuration, note.velocity);
+			prevNoteDuration = note.ticks;
 		});
 
 		return file.toBytes();
@@ -379,12 +346,12 @@
     function save(data) {
     	data = Uint8Array.from( data, char => char.charCodeAt(0) );
         var blob = new Blob( [data], {type: 'application/octet-stream'} );
-    	saveAs( blob, 'gaze.midi', true);
+    	saveAs( blob, 'gaze.mid', true);
 		/*
         var blob = new Blob(d, {type: 'application/octet-stream'});
         
         var downloadLink = document.createElement("a");
-        downloadLink.download = 'gaze.midi';
+        downloadLink.download = 'gaze.mid';
         downloadLink.innerHTML = 'Download File';
 
         var URL = window.URL || window.webkitURL;
@@ -643,6 +610,8 @@
                 vel = Math.round(vel * 127);
             }
             
+            console.log('played note: ', noteString, duration, velocity);
+
             var noteInt = this.CalcNote(noteString);
             MIDI.noteOn(0, noteInt, vel, this._timeline);
             MIDI.noteOff(0, noteInt, vel, this._timeline + this.barDuration * duration);
@@ -657,6 +626,7 @@
             if (notes) {
                 for (var i = 0; i < notes.length; i++) {
                     var note = notes[i];
+                    note.ticks = Math.round( this.barDuration * note.duration ) * 64;
                     this.play(note.name, note.duration, true, note.velocity);
                 }
                 replay.classList.remove('disabled');
@@ -825,7 +795,7 @@
         var velocity = this.GetVelocity(coords, duration);
             
         this._notes.push(new root.Visic.Note(noteName, noteDuration, 0, velocity, coords, duration));
-        console.log('new note: ', noteName, noteDuration);
+        console.log('new note: ', noteName, noteDuration, velocity);
     };
     
     Synthesizer.prototype.getSequence = function() {
