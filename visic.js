@@ -319,17 +319,17 @@
     function createFile(data) {
 		var file = new Midi.File();
 
-		var track = new Midi.Track();
-		file.addTrack(track);
+		// var track = new Midi.Track();
+		// file.addTrack(track);
 
-		track.addNote(0, 'c4', 64);
-		track.addNote(0, 'd4', 64);
-		track.addNote(0, 'e4', 64);
-		track.addNote(0, 'f4', 64);
-		track.addNote(0, 'g4', 64);
-		track.addNote(0, 'a4', 64);
-		track.addNote(0, 'b4', 64);
-		track.addNote(0, 'c5', 64)
+		// track.addNote(0, 'c4', 64);
+		// track.addNote(0, 'd4', 64);
+		// track.addNote(0, 'e4', 64);
+		// track.addNote(0, 'f4', 64);
+		// track.addNote(0, 'g4', 64);
+		// track.addNote(0, 'a4', 64);
+		// track.addNote(0, 'b4', 64);
+		// track.addNote(0, 'c5', 64)
 
 		// file
 	 //  		.addTrack()
@@ -367,11 +367,11 @@
 		//     .noteOff(0, 'g4')
 		//     ;
 		
-		// var track = new Midi.Track();
-		// file.addTrack(track);
-		// data.forEach( function(item) {
-		// 	track.addNote(0, item.name, item.fixDuration, item.velocity);
-		// });
+		var track = new Midi.Track();
+		file.addTrack(track);
+		data.forEach( function(item) {
+			track.addNote(0, item.name, item.fixDuration, item.velocity);
+		});
 
 		return file.toBytes();
     }
