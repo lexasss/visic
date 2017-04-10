@@ -236,15 +236,39 @@
 //   Methods:
 //      update() - updates the image
 
-(function (root) { 
+(function (root) {
     'use strict';
 
+    const SOURCE = {
+        splashbase: {
+            url: 'http://www.splashbase.co/api/v1/images/random',
+            responsePath: '',
+            responseKeys: [
+                'url',
+                'large_url'
+            ]
+        },
+        unsplash: {
+            url: 'https://api.unsplash.com/photos/random',
+            request: {
+                client_id: 'a3d660ad711847de53b445283be569b3d042ff97b992844841ee47b385e56403',
+                orientation: 'landscape'
+            },
+            responsePath: 'urls',
+            responseKeys: [
+                'regular',
+                'raw'
+            ]
+        }
+    };
+
+    const source = SOURCE['unsplash'];
+
     if (!root.Visic) root.Visic = { };
-    
-    function Image(id) {
-        this.URL = 'http://www.splashbase.co/api/v1/images/random';
+
+    function Image( id ) {
         this.id = id;
-        
+
         this._img = document.querySelector('#' + id);
         if (!this._img) {
             throw 'Image with the ID = ' + id + ' does not exist';
@@ -252,42 +276,76 @@
         else if (this._img.src === undefined) {
             throw 'The element with ID = ' + id + ' is not an image';
         }
-        
+
         this._reload = document.getElementById('reload_' + id);
         if (!this._reload)
             throw 'Missing HTML elements for "image" object';
-        
+
         this._reload.addEventListener('click', this.update.bind(this));
     }
-    
+
     Image.prototype.update = function () {
-        var self = this;
-        var xhr = new XMLHttpRequest();
-        xhr.onload = function() {
-            var resp = JSON.parse(xhr.responseText);
-            if (resp.url !== undefined) {
-                self._img.src = resp.url;
-            }
-            else if (resp.large_url !== undefined) {
-                self._img.src = resp.large_url;
-            }
+        const xhr = new XMLHttpRequest();
+        xhr.onload = () => {
+            const resp = JSON.parse(xhr.responseText);
+
+            source.responseKeys.some( key => {
+                let src = resp;
+                if (source.responsePath) {
+                    src = src[ source.responsePath ];
+                };
+                src = src[ key ];
+
+                if (src) {
+                    console.log('path:', src);
+                    this._img.src = src;
+                    return true;
+                }
+
+                return false;
+            });
+            // if (resp.url !== undefined) {
+            //     this._img.src = resp.url;
+            // }
+            // else if (resp.large_url !== undefined) {
+            //     this._img.src = resp.large_url;
+            // }
         };
-        
-        xhr.open('GET', this.URL, true);
+
+        const url = source.url + requestToString( source.request );
+        xhr.open('GET', url, true);
         xhr.send();
     };
-    
+
+    function requestToString( request ) {
+        if (!request) {
+            return '';
+        }
+
+        const result = [];
+        for (let key in request) {
+            result.push( `${encodeURIComponent(key)}=${encodeURIComponent(request[key])}`);
+        }
+
+        return '?' + result.join( '&' );
+    }
+
     root.Visic.Image = Image;
-    
+
 })(window);
 
-// Manages etudriver, delivers fixations
+// Manages the Download button status, saves midi to a file
 //
-// gaze (object):
+// midiFile (object):
+//	 Dependencies:
+//		FileSaver
 //   Required HTML elements:
 //      #download - displays the current eye tracker, on 'not connected' if there is no connection to ETU-Driver
 //   Required CSS styles:
-//      .disabled - disables buttons
+//      .disabled - disables the Download button
+//	 Methods:
+//		set(data): assigns player.sequence data
+//		download(): creates a file and offers to save it
 
 (function (root) { 
     'use strict';

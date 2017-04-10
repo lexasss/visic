@@ -47,7 +47,7 @@ img {
 #menu .button {
     background-color: #666666;
     background-image: -webkit-linear-gradient(bottom, #666666, #7d7d7d);
-    background-image: linear-gradient(bottom, #666666, #7d7d7d);
+    background-image: linear-gradient(to top, #666666, #7d7d7d);
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     color: #e7e5e5;
@@ -63,7 +63,7 @@ img {
 #menu .button.disabled {
     background-color: #BBBBBB;
     background-image: -webkit-linear-gradient(bottom, #CCCCCC, #BBBBBB) !important;
-    background-image: linear-gradient(bottom, #CCCCCC, #BBBBBB) !important;
+    background-image: linear-gradient(to top, #CCCCCC, #BBBBBB) !important;
     color: #8A8A7B;
     cursor: auto;
     pointer-events: none;
